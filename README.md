@@ -12,8 +12,8 @@ All modules share a single `ai_config.py` at the project root that handles crede
 **Option A — Vertex AI**
 ```
 GOOGLE_GENAI_USE_VERTEXAI=1
-GOOGLE_CLOUD_PROJECT=isr-matrix
-GOOGLE_CLOUD_LOCATION=us-central1
+GOOGLE_CLOUD_PROJECT=<project-name>
+GOOGLE_CLOUD_LOCATION=<location>
 ```
 Also requires: `gcloud auth application-default login`
 
