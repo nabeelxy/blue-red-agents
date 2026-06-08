@@ -1,0 +1,182 @@
+M3AAWG Email Authentication Recommendations
+Messaging, Malware and Mobile Anti-Abuse Working Group
+
+OVERVIEW
+
+Email authentication is the foundation of modern email security. Without authentication, there is no technical mechanism to verify that an email claiming to be from a given domain was actually authorized by that domain. This document covers the three primary email authentication mechanisms: SPF, DKIM, and DMARC, as well as the emerging BIMI standard.
+
+M3AAWG strongly recommends that all sending organizations implement SPF, DKIM, and DMARC at an enforcing policy. Failure to implement authentication makes a domain available for spoofing and phishing abuse.
+
+---
+
+SECTION 1: SPF — SENDER POLICY FRAMEWORK (RFC 7208)
+
+1.1 What SPF Does
+SPF allows a domain owner to publish, in DNS, the set of IP addresses authorized to send email claiming to be from that domain. Receiving mail servers check the SPF record of the envelope From (Return-Path) domain against the IP address of the connecting server.
+
+1.2 SPF Record Structure
+An SPF record is a DNS TXT record published at the root of the domain (e.g., example.com). Example:
+
+  v=spf1 ip4:192.0.2.0/24 include:_spf.mailprovider.com -all
+
+Mechanisms:
+- ip4 / ip6: Specific IP addresses or CIDR ranges
+- include: Delegate to another domain's SPF record
+- a / mx: Authorize the domain's A or MX records
+- all: Catch-all (should be -all for strict enforcement)
+
+1.3 SPF Qualifiers
+- +all: Pass (never use this)
+- ~all: SoftFail (not a strong enforcement; many filters treat as pass)
+- -all: Fail (recommended — explicitly reject all sources not listed)
+- ?all: Neutral (no policy)
+
+M3AAWG RECOMMENDATION: Always use -all (hard fail). Using ~all (softfail) provides no real protection against spoofing.
+
+1.4 SPF Limitations
+- SPF only authenticates the envelope From domain, not the header From domain visible to users.
+- SPF breaks when email is forwarded, because the forwarding server's IP is not in the original sender's SPF record.
+- SPF has a 10 DNS lookup limit. Exceeding this causes SPF to fail (permerror).
+- SPF alone is insufficient — DKIM and DMARC are required for full protection.
+
+1.5 SPF and Subdomains
+SPF records are not inherited by subdomains. If you send from mail.example.com and example.com, each domain requires its own SPF record. Subdomains that do not send email should have a record of "v=spf1 -all" to prevent abuse.
+
+---
+
+SECTION 2: DKIM — DOMAINKEYS IDENTIFIED MAIL (RFC 6376)
+
+2.1 What DKIM Does
+DKIM allows a sending organization to cryptographically sign outgoing email. The signature is included in the DKIM-Signature header. Receiving mail servers retrieve the signer's public key from DNS and verify the signature. A valid signature proves the email has not been modified in transit and was authorized by the signing domain.
+
+2.2 DKIM Key Requirements
+- Key size: M3AAWG recommends a minimum 2048-bit RSA key. 1024-bit keys are deprecated and must not be used.
+- Ed25519 keys are also supported and recommended for new deployments due to smaller key size and stronger security.
+- Keys must be rotated regularly. M3AAWG recommends rotation every 6-12 months.
+- Retired keys must remain published in DNS for at least 7 days after last use to allow delayed verification.
+
+2.3 DKIM Selector
+The DKIM selector is a string used to distinguish between multiple DKIM keys for the same domain. The public key is published in DNS at:
+  [selector]._domainkey.[domain]
+
+Example: s1._domainkey.example.com
+
+2.4 What DKIM Signs
+The DKIM signature covers:
+- The message body (with canonicalization)
+- Selected headers (From, To, Subject, Date are essential)
+- The signature itself (header-level)
+
+DKIM does NOT sign all headers by default. Attackers can add unsigned headers above signed ones (header injection). M3AAWG recommends signing all critical headers and using oversigning (including headers not present to prevent future injection).
+
+2.5 DKIM and Forwarding
+Unlike SPF, DKIM signatures survive forwarding as long as the message body and signed headers are not modified. This makes DKIM more resilient for forwarded email.
+
+2.6 DKIM Alignment with DMARC
+For DMARC compliance via DKIM, the d= tag in the DKIM-Signature must match (or be a subdomain of) the From header domain. This is DKIM alignment.
+
+---
+
+SECTION 3: DMARC — DOMAIN-BASED MESSAGE AUTHENTICATION, REPORTING, AND CONFORMANCE (RFC 7489)
+
+3.1 What DMARC Does
+DMARC builds on SPF and DKIM to:
+1. Specify what to do with email that fails authentication (policy)
+2. Require alignment between authenticated domains and the visible From header domain
+3. Request aggregate and forensic reports from receiving mail servers
+
+DMARC closes the critical gap left by SPF and DKIM: it ties authentication to the domain the user actually sees in the From header.
+
+3.2 DMARC Record Structure
+Published as a DNS TXT record at _dmarc.[domain]:
+
+  v=DMARC1; p=reject; rua=mailto:reports@example.com; ruf=mailto:forensics@example.com; pct=100; adkim=s; aspf=s
+
+Key tags:
+- p= : Policy for failing messages (none / quarantine / reject)
+- rua= : Aggregate report destination (recommended)
+- ruf= : Forensic/failure report destination (optional)
+- pct= : Percentage of messages subject to policy (1-100)
+- adkim= : DKIM alignment mode (r=relaxed, s=strict)
+- aspf= : SPF alignment mode (r=relaxed, s=strict)
+
+3.3 DMARC Policy Levels
+
+p=none
+- Monitoring mode only. No action is taken on failing messages.
+- Use during initial deployment to collect reports and understand email streams.
+- M3AAWG WARNING: p=none provides NO protection against spoofing. This must be a temporary phase only.
+
+p=quarantine
+- Messages failing DMARC are sent to spam/junk folder.
+- A significant improvement over p=none. Reduces phishing risk substantially.
+- Appropriate as an intermediate step when moving to p=reject.
+
+p=reject
+- Messages failing DMARC are rejected outright by the receiving server.
+- PROVIDES FULL PROTECTION against domain spoofing.
+- M3AAWG STRONGLY RECOMMENDS all domains reach p=reject.
+- Required for BIMI compliance.
+
+3.4 DMARC Alignment
+DMARC requires alignment between the RFC5322 From domain and either:
+- The SPF-authenticated envelope From domain (SPF alignment), OR
+- The DKIM d= signing domain (DKIM alignment)
+
+Relaxed alignment (default): The From domain and authenticated domain share the same Organizational Domain.
+Strict alignment: The From domain and authenticated domain must match exactly.
+
+M3AAWG recommends strict alignment where operationally feasible.
+
+3.5 DMARC Reporting
+Aggregate reports (rua):
+- Sent daily by participating mailbox providers
+- XML format summarizing authentication results for all messages claiming to be from your domain
+- Essential for discovering unauthorized sending sources and monitoring authentication health
+- Must be processed; M3AAWG recommends using a DMARC reporting service
+
+Forensic reports (ruf):
+- Sent per-message upon failure
+- May contain sensitive content; privacy implications must be considered
+- Support varies by mailbox provider
+
+3.6 DMARC Implementation Path
+M3AAWG recommended deployment sequence:
+1. Audit all email-sending systems and services
+2. Configure SPF for all sending domains
+3. Deploy DKIM signing on all outbound mail streams
+4. Publish DMARC at p=none with rua= reporting
+5. Monitor reports for 30-60 days; identify unauthorized and legitimate sources
+6. Move to p=quarantine; monitor complaints
+7. Move to p=reject; maintain p=100
+
+---
+
+SECTION 4: BIMI — BRAND INDICATORS FOR MESSAGE IDENTIFICATION
+
+4.1 What BIMI Does
+BIMI is an emerging standard that allows brand logo display in the inbox UI of participating mailbox providers. It is contingent on a domain having a valid DMARC policy of p=quarantine or p=reject.
+
+4.2 BIMI Requirements
+- DMARC policy of p=quarantine or p=reject at the organizational domain
+- A Verified Mark Certificate (VMC) from an authorized Certificate Authority (currently Entrust and DigiCert)
+- SVG logo in the M3AAWG/BIMI approved format
+- BIMI DNS record published at default._bimi.[domain]
+
+4.3 BIMI as Incentive for DMARC Enforcement
+M3AAWG notes that BIMI creates a strong business incentive (brand visibility) for organizations to reach DMARC p=reject, which has positive security outcomes for the entire email ecosystem.
+
+---
+
+SECTION 5: ARC — AUTHENTICATED RECEIVED CHAIN (RFC 8617)
+
+5.1 What ARC Does
+ARC (Authenticated Received Chain) is designed to preserve authentication results through email forwarding and mailing list re-sending, which typically break SPF and DKIM. ARC adds a chain of signed headers that record authentication state at each hop.
+
+5.2 ARC Use Cases
+- Mailing lists that modify message content (breaking DKIM)
+- Email forwarding services (breaking SPF)
+- Third-party filtering services that re-inject email
+
+5.3 M3AAWG Position on ARC
+ARC is not a replacement for SPF, DKIM, or DMARC. It is a supplementary mechanism for intermediaries. M3AAWG recommends that organizations operating mailing lists or forwarders implement ARC to preserve authentication information for downstream receivers.

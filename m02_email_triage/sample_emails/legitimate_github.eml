@@ -1,0 +1,62 @@
+Return-Path: <noreply@github.com>
+Received: from out-24.smtp.github.com (192.30.252.24)
+	by mx.demo-mailbox.com with ESMTPS id xyz789
+	for <developer@demo-mailbox.com>; Mon, 14 Apr 2026 10:00:01 +0000
+Authentication-Results: mx.demo-mailbox.com;
+	spf=pass (github.com: 192.30.252.24 is a permitted sender) smtp.mailfrom=noreply@github.com;
+	dkim=pass header.i=@github.com header.s=pf2023 header.b=AbCdEfGh;
+	dmarc=pass (p=REJECT sp=REJECT dis=NONE) header.from=github.com
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=github.com;
+	s=pf2023; t=1744624801;
+	bh=6DL0H2Ful3Mq1aYx9Rb4jHw7Vp5eSct8nOKz2IdQgA=;
+	h=From:To:Subject:Date:Message-ID;
+	b=AbCdEfGhIjKlMnOpQrStUvWxYz0123456789/AbCdEfGhIjKl==
+From: GitHub <noreply@github.com>
+Reply-To: noreply@github.com
+To: developer@demo-mailbox.com
+Subject: [GitHub] A pull request has been opened in your-org/your-repo
+Date: Mon, 14 Apr 2026 10:00:00 +0000
+Message-ID: <20260414100000.xyz@github.com>
+MIME-Version: 1.0
+Content-Type: multipart/alternative; boundary="----=_GH_Part_99999"
+
+------=_GH_Part_99999
+Content-Type: text/plain; charset=UTF-8
+
+developer opened a pull request.
+
+Pull request title: Add OAuth2 support to API client (#42)
+Repository: your-org/your-repo
+Branch: feature/oauth2 → main
+
+View and merge this pull request at:
+https://github.com/your-org/your-repo/pull/42
+
+---
+You're receiving this because you are subscribed to this repository.
+Reply to this email directly or view it on GitHub.
+Unsubscribe: https://github.com/notifications/unsubscribe-auth/AABBCC
+
+------=_GH_Part_99999
+Content-Type: text/html; charset=UTF-8
+
+<html>
+<body>
+  <p>developer opened a pull request.</p>
+  <p><strong>Add OAuth2 support to API client (#42)</strong><br>
+     your-org/your-repo &bull; feature/oauth2 &rarr; main</p>
+  <p>
+    <a href="https://github.com/your-org/your-repo/pull/42">
+      View pull request
+    </a>
+  </p>
+  <hr>
+  <small>
+    <a href="https://github.com/notifications/unsubscribe-auth/AABBCC">
+      Unsubscribe
+    </a>
+  </small>
+</body>
+</html>
+
+------=_GH_Part_99999--

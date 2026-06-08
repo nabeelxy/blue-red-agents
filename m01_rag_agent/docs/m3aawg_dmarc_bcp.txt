@@ -1,0 +1,156 @@
+M3AAWG DMARC Practical Guide and Best Common Practices
+Messaging, Malware and Mobile Anti-Abuse Working Group
+
+OVERVIEW
+
+DMARC (Domain-based Message Authentication, Reporting, and Conformance) is the most impactful email security control available today. It directly prevents domain spoofing — the technique most commonly used in phishing and business email compromise (BEC). This document provides practical guidance for DMARC deployment at scale, including common problems and their solutions.
+
+According to M3AAWG data, domains with DMARC at p=reject experience dramatically lower rates of phishing abuse. However, industry-wide adoption remains incomplete. M3AAWG urges all domain owners to move to p=reject as quickly as operationally feasible.
+
+---
+
+SECTION 1: WHY DMARC MATTERS
+
+1.1 The Spoofing Problem
+Without DMARC, any actor anywhere on the internet can send an email that appears in the recipient's inbox as being from your domain. The From header in an email message is completely unauthenticated without DMARC. Phishing campaigns routinely spoof the domains of banks, government agencies, and enterprise brands.
+
+1.2 Impact of Domain Spoofing
+- Phishing attacks against customers, partners, and employees
+- Business Email Compromise (BEC) — fraudulent wire transfer requests
+- Brand reputation damage when recipients receive malicious email appearing to come from your domain
+- Supply chain attacks via spoofed supplier domains
+- Executive impersonation (CEO fraud)
+
+1.3 What DMARC Prevents
+A domain with p=reject DMARC will cause any mailbox provider that honors DMARC (all major ones do) to reject messages that fail authentication. An attacker cannot send a convincing spoofed email from your domain to recipients at Gmail, Outlook, Yahoo, Apple Mail, or any other DMARC-honoring provider.
+
+---
+
+SECTION 2: PRE-DEPLOYMENT PLANNING
+
+2.1 Email Source Discovery
+Before deploying DMARC, you must identify ALL sources that send email using your domain. Missing even one legitimate source will cause legitimate email to be rejected when you reach p=reject.
+
+Common sources often overlooked:
+- CRM platforms (Salesforce, HubSpot, etc.)
+- Marketing automation (Marketo, Pardot, etc.)
+- Email service providers (Mailchimp, SendGrid, etc.)
+- Transactional email (Twilio SendGrid, AWS SES, etc.)
+- HR systems (Workday, BambooHR welcome emails)
+- IT systems (Jira, PagerDuty, monitoring alerts)
+- Financial systems (invoicing, ERP)
+- Web applications (password reset, notifications)
+- Security tools (vulnerability scanners, SIEM alerts)
+
+2.2 Subdomain Inventory
+Every subdomain that sends email needs its own SPF record and DKIM signing configuration. Subdomains that do NOT send email should have restrictive policies:
+- SPF: "v=spf1 -all"
+- DMARC: v=DMARC1; p=reject
+
+2.3 Authentication Baseline
+Before publishing DMARC, ensure:
+- SPF is configured for all sending domains and subdomains
+- DKIM is configured for all outbound mail streams
+- All legitimate sending sources pass SPF or DKIM alignment
+
+---
+
+SECTION 3: DMARC DEPLOYMENT PHASES
+
+Phase 1: Monitoring (p=none)
+Goal: Discover all email sources; establish reporting baseline
+Duration: 30-60 days minimum
+
+Actions:
+- Publish DMARC at p=none with rua= reporting address
+- Set up aggregate report processing (use a DMARC reporting tool)
+- Identify all legitimate sources that appear in reports
+- Identify unauthorized sources (spoofing attempts)
+- Configure SPF and DKIM for any legitimate source not yet authenticated
+
+Success criteria:
+- 95%+ of legitimate email passes SPF or DKIM alignment
+- Unauthorized sources identified and logged
+
+Phase 2: Quarantine (p=quarantine)
+Goal: Validate authentication coverage; reduce spoofing impact
+Duration: 30-60 days
+
+Actions:
+- Move to p=quarantine; start with pct=10 and ramp up
+  Example: pct=10 → pct=25 → pct=50 → pct=100
+- Monitor spam folder placement of legitimate email
+- Respond to any legitimate email being quarantined
+- Track complaint rates for any authentication issues
+
+Success criteria:
+- No legitimate email being quarantined
+- Authentication pass rate stable at 95%+
+
+Phase 3: Enforcement (p=reject)
+Goal: Full domain protection against spoofing
+Duration: Ongoing
+
+Actions:
+- Move to p=reject; start with pct=10 and ramp to pct=100
+- Monitor reports for any new legitimate sources
+- Maintain DMARC records and certificates
+
+Success criteria:
+- p=reject; pct=100 achieved
+- Ongoing monitoring in place
+
+---
+
+SECTION 4: COMMON DMARC FAILURES AND SOLUTIONS
+
+4.1 Third-Party Sender Failing DMARC
+Problem: ESP or SaaS tool sends email on your behalf but you have not configured DKIM signing through them, so the email fails DMARC.
+Solution: Either (a) configure DKIM signing through the third-party sender with a key that aligns to your From domain, or (b) use the third-party's own subdomain for sending (e.g., use marketing.example.com via SendGrid, and configure DMARC for marketing.example.com separately).
+
+4.2 Forwarding Breaking SPF
+Problem: Users who forward email via personal accounts or alumni email forwarders break SPF alignment because the forwarding server IP is not in the sender's SPF record.
+Solution: Rely on DKIM alignment for DMARC pass. Ensure DKIM is properly signed. ARC (RFC 8617) also helps preserve authentication across hops.
+
+4.3 Mailing Lists Breaking DKIM
+Problem: Some mailing list managers modify the message body or add footers, breaking the DKIM body hash. Mailing lists that change the subject line (e.g., adding [list-name]) can also break header DKIM.
+Solution: Use ARC-aware mailing list software. Alternatively, configure DKIM with relaxed body canonicalization (l= tag) and accept that some forwarders/lists will fail. Relying on SPF alignment for these flows may be necessary.
+
+4.4 SPF Exceeding 10 DNS Lookup Limit
+Problem: Overly complex SPF records with many includes can exceed the 10 DNS lookup limit, causing SPF to return permerror.
+Solution: Flatten the SPF record (replace includes with explicit IP ranges) or use an SPF optimization service.
+
+4.5 Subdomain Spoofing
+Problem: DMARC at the organizational domain (example.com) does NOT automatically protect subdomains (mail.example.com) unless a subdomain DMARC policy (sp= tag) is set.
+Solution: Use the sp= tag to set policy for all subdomains:
+  v=DMARC1; p=reject; sp=reject; rua=mailto:reports@example.com
+
+---
+
+SECTION 5: DMARC REPORTING AND MONITORING
+
+5.1 Aggregate Report Structure
+Aggregate (RUA) reports are XML files sent by participating mail receivers. Each report contains:
+- The reporting organization (Gmail, Outlook, Yahoo, etc.)
+- Date range of the report
+- For each source IP:
+  - Number of messages
+  - SPF result and alignment
+  - DKIM result and alignment
+  - DMARC disposition (none/quarantine/reject)
+
+5.2 Interpreting Reports
+Key questions when reviewing reports:
+- Are there IP addresses sending mail in your name that you do not recognize? (potential spoofing)
+- Are any of your legitimate sending IPs failing authentication? (configuration gap)
+- What is your overall pass rate? (authentication health)
+- What volume of spoofing attempts is your domain experiencing?
+
+5.3 Forensic Reports
+Forensic (RUF) reports contain redacted copies of individual failing messages. Not all mailbox providers send them. Privacy considerations:
+- RUF reports may contain sensitive message content and recipient addresses.
+- Consider whether to enable RUF; many organizations skip it due to privacy/legal concerns.
+- If RUF is enabled, ensure the receiving address is secured and access-controlled.
+
+5.4 Report Volume
+High-volume domains may receive thousands of aggregate reports daily. M3AAWG recommends using a dedicated DMARC reporting service rather than processing raw XML manually. Open-source options (parsedmarc, dmarcian) and commercial services are available.

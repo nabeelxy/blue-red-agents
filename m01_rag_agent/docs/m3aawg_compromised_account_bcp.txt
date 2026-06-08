@@ -1,0 +1,171 @@
+M3AAWG Compromised User Remediation Best Common Practices
+Messaging, Malware and Mobile Anti-Abuse Working Group
+
+OVERVIEW
+
+Compromised user accounts are one of the primary sources of spam, phishing, and malware distribution on email and messaging platforms. When an attacker gains control of a legitimate account, they gain access to the platform's trusted reputation, delivery infrastructure, and contact lists. This document defines best practices for detecting, responding to, and recovering from account compromise.
+
+Compromised accounts are particularly dangerous because they:
+- Send from trusted, established IP addresses and domains
+- Have legitimate authentication credentials (pass SPF, DKIM, DMARC)
+- May have access to the victim's contacts and prior communications
+- Are harder for traditional spam filters to identify
+
+---
+
+SECTION 1: ACCOUNT COMPROMISE VECTORS
+
+1.1 Credential Stuffing
+Attackers use large lists of username/password combinations (obtained from data breaches at other services) to attempt login across multiple platforms. Because users reuse passwords, a breach at one service compromises accounts at others. AI agents now automate credential stuffing at high scale, with automated CAPTCHA solving and distributed infrastructure.
+
+1.2 Phishing for Credentials
+Attackers send phishing emails or messages directing victims to fake login pages that capture their credentials. Spear phishing targets specific individuals with personalized lures. AI/LLM tools have dramatically lowered the cost of generating convincing, personalized phishing content in multiple languages.
+
+1.3 Session Hijacking
+Malware or cross-site scripting (XSS) attacks can steal session tokens, allowing attackers to take over authenticated sessions without needing credentials.
+
+1.4 SIM Swapping
+Attackers impersonate the victim at a mobile carrier to redirect their phone number to an attacker-controlled SIM, bypassing SMS-based two-factor authentication.
+
+1.5 OAuth Token Theft
+Attackers trick users into granting OAuth permissions to malicious third-party applications, which then retain access even after password changes.
+
+1.6 AI-Assisted Account Takeover
+Emerging threat: LLM-powered agents can automate the ATO workflow end-to-end:
+- Generate personalized phishing lures at scale
+- Automatically solve CAPTCHAs during login attempts
+- Test credential variations based on known personal information
+- Navigate multi-step authentication flows
+
+---
+
+SECTION 2: DETECTION SIGNALS
+
+2.1 Behavioral Anomalies
+The most reliable compromise signals are behavioral deviations from a user's established baseline:
+- Login from new geographic location, especially combined with a new device
+- Login at unusual times for the account's timezone
+- Sudden large increase in outbound message volume
+- Sending to new recipients not in prior communication history
+- Changes to account settings (forwarding rules, reply-to addresses)
+- Deletion of sent items or inbox (attacker covering tracks)
+- Multiple failed login attempts followed by successful login
+
+2.2 Authentication Signals
+- Login from IP address on known blocklist or associated with prior abuse
+- Login from IP in a datacenter or hosting provider (not a residential ISP)
+- Login from TOR exit node or known VPN provider
+- Device fingerprint mismatch (different browser, OS, screen resolution)
+- Simultaneous logins from geographically impossible locations
+
+2.3 Message Content Signals
+Messages sent from a compromised account often contain:
+- Spam or phishing content
+- Malicious URLs or attachments
+- Unusual language, formatting, or content for this user
+- Requests for money transfers or gift cards
+- Subject lines associated with known phishing campaigns
+
+2.4 Recipient Feedback Signals
+- Spam complaints from recipients of the compromised account's messages
+- Feedback loop (FBL) reports triggered by sent messages
+- Bounce-back patterns suggesting bulk sending to invalid addresses
+
+---
+
+SECTION 3: AUTOMATED DETECTION SYSTEMS
+
+3.1 Risk Scoring
+Build a composite risk score based on:
+- Weighted combination of behavioral anomaly signals
+- Authentication signals
+- Historical account behavior baseline
+- Time since last login and time since account creation
+- Account age (newer accounts have less baseline data)
+
+3.2 Machine Learning Approaches
+Train anomaly detection models on:
+- Historical login patterns (time, location, device)
+- Sending volume and recipient patterns
+- Session duration and navigation patterns
+
+M3AAWG notes that ML models must be retrained regularly as attacker techniques evolve. Models should be evaluated not only on false negative rate (missed compromises) but also on false positive rate (legitimate users incorrectly flagged).
+
+3.3 Honeypot and Trap Accounts
+Maintain a set of internal trap accounts with no legitimate users. Any message sent to these accounts indicates that a sending account has access to known-invalid addresses, which is a strong compromise signal.
+
+3.4 Real-Time vs. Batch Detection
+Real-time detection (per-authentication, per-message) is preferable for high-risk signals. Batch detection (hourly or daily analysis) is acceptable for lower-priority signals that require aggregation.
+
+---
+
+SECTION 4: RESPONSE AND REMEDIATION
+
+4.1 Immediate Response upon Detection
+Upon high-confidence compromise detection:
+- Terminate all active sessions immediately (invalidate all session tokens)
+- Require re-authentication with strong verification
+- Halt outbound message sending from the account pending review
+- Notify the legitimate account owner via out-of-band channel (SMS, registered secondary email)
+- Log the detection event with full details for forensic analysis
+
+4.2 Authentication Reset
+During remediation:
+- Force a password reset through a verified channel
+- If SMS 2FA is in use, verify that the phone number has not been SIM-swapped before using it for reset
+- Consider requiring step-up authentication (hardware token, in-person verification) for high-risk accounts
+- Revoke all OAuth tokens and third-party application authorizations
+- Review and remove any attacker-installed email forwarding rules or filters
+
+4.3 Message Recall and Recipient Notification
+- Attempt to recall or mark as spam any messages sent during the compromise window
+- Notify recipients who received messages during the compromise window if the content was harmful
+- Coordinate with abuse desks at receiving mail providers where appropriate
+
+4.4 Forensic Analysis
+After remediation:
+- Preserve logs of all activity during the compromise window
+- Identify the likely compromise vector
+- Determine the scope: what data was accessed, what messages were sent, what contacts were exposed
+- Use findings to improve detection systems
+
+4.5 Account Recovery Verification
+Before restoring full account access:
+- Confirm identity of the legitimate account owner via multiple factors
+- Walk through recent activity with the owner to confirm the compromise window
+- Confirm that all attacker-installed changes (forwarding rules, application access) have been removed
+- Provide the owner with guidance on securing their account (password manager, hardware key)
+
+---
+
+SECTION 5: PLATFORM-LEVEL PREVENTION
+
+5.1 Multi-Factor Authentication
+M3AAWG strongly recommends mandatory MFA for all accounts, not just as an optional feature. Recommended MFA mechanisms in order of strength:
+- Hardware security keys (FIDO2/WebAuthn) — strongly recommended
+- Time-based one-time passwords (TOTP) via authenticator app
+- Push-based authentication apps
+- SMS OTP — least preferred due to SIM swapping risk
+
+5.2 Adaptive Authentication
+Require step-up authentication when risk signals are elevated:
+- Login from new device or location
+- Significant account inactivity period
+- Password recently reset
+- Sensitive action (changing recovery email, disabling MFA)
+
+5.3 Rate Limiting and Account Lockout
+- Implement progressive login rate limiting with exponential backoff
+- After a threshold of failed logins, require a CAPTCHA or step-up challenge
+- Temporary lockout after sustained failed login attempts
+- Alert account owner when lockout occurs
+
+5.4 Credential Breach Monitoring
+- Subscribe to breach monitoring services (Have I Been Pwned API, etc.)
+- Proactively notify users when their email address appears in a known breach
+- Prompt affected users to change their password and enable MFA
+
+5.5 Sending Volume Limits
+- Enforce per-account daily sending limits that match normal user behavior
+- Temporarily restrict new accounts to lower sending limits until baseline is established
+- Trigger review when accounts approach volume limits unexpectedly

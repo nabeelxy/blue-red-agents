@@ -1,0 +1,66 @@
+Return-Path: <security@paypal-secure-verify.net>
+Received: from mail.paypal-secure-verify.net (185.220.101.47)
+	by mx.demo-mailbox.com with ESMTP id abc123
+	for <victim@demo-mailbox.com>; Mon, 14 Apr 2026 09:12:33 +0000
+Authentication-Results: mx.demo-mailbox.com;
+	spf=fail (paypal-secure-verify.net: domain of security@paypal-secure-verify.net does not designate 185.220.101.47 as permitted sender) smtp.mailfrom=security@paypal-secure-verify.net;
+	dkim=none;
+	dmarc=fail (p=NONE sp=NONE dis=NONE) header.from=paypal-secure-verify.net
+DKIM-Signature: v=1; a=rsa-sha256; d=paypal.com; s=selector1;
+	b=INVALIDSIGNATUREFORPHISHINGDEMO==
+From: "PayPal Security Team" <security@paypal-secure-verify.net>
+Reply-To: support-team@recovery-help-desk.ru
+To: victim@demo-mailbox.com
+Subject: [URGENT] Your PayPal account has been limited
+Date: Mon, 14 Apr 2026 09:12:31 +0000
+Message-ID: <20260414091231.abc@paypal-secure-verify.net>
+MIME-Version: 1.0
+Content-Type: multipart/alternative; boundary="----=_Part_12345_67890"
+
+------=_Part_12345_67890
+Content-Type: text/plain; charset=UTF-8
+
+Dear Customer,
+
+We have detected unusual activity on your PayPal account. Your account
+has been temporarily limited until you verify your identity.
+
+To restore your account, please click the link below immediately:
+
+http://paypa1-secure-verify.net/restore?token=abc123&user=victim
+
+If you do not verify within 24 hours, your account will be permanently
+suspended and your funds will be held.
+
+PayPal Security Department
+
+------=_Part_12345_67890
+Content-Type: text/html; charset=UTF-8
+
+<html>
+<head><title>PayPal</title></head>
+<body style="font-family: Arial, sans-serif;">
+<div style="max-width: 600px; margin: 0 auto;">
+  <img src="https://paypa1-secure-verify.net/logo.png" alt="PayPal" style="width:150px">
+  <h2 style="color: #003087;">Your account has been limited</h2>
+  <p>Dear Valued Customer,</p>
+  <p>We have detected <strong>suspicious activity</strong> on your account.
+  To protect you, we have temporarily limited your account access.</p>
+  <p style="color: red; font-weight: bold;">ACTION REQUIRED: Verify within 24 hours or your account will be permanently closed.</p>
+  <p>
+    <a href="http://paypa1-secure-verify.net/restore?token=abc123"
+       style="background:#003087;color:white;padding:12px 24px;text-decoration:none;border-radius:4px;">
+      Restore My Account
+    </a>
+  </p>
+  <p>The link above will take you to:
+     <a href="http://paypa1-secure-verify.net/restore">
+       https://www.paypal.com/verify
+     </a>
+  </p>
+  <p>Thank you,<br>PayPal Security Team</p>
+</div>
+</body>
+</html>
+
+------=_Part_12345_67890--

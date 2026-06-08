@@ -1,0 +1,127 @@
+M3AAWG Sender Best Common Practices
+Version 3.0 | Messaging, Malware and Mobile Anti-Abuse Working Group
+
+OVERVIEW
+
+This document defines the best common practices for organizations that send bulk or transactional email. It is applicable to email service providers (ESPs), marketing platforms, transactional senders, and any organization sending email at volume. Compliance with these practices improves email deliverability, sender reputation, and recipient trust.
+
+---
+
+SECTION 1: PERMISSION AND CONSENT
+
+1.1 Explicit Opt-In Required
+Senders MUST obtain explicit, affirmative consent from recipients before sending commercial or marketing email. Pre-checked boxes, inferred consent, or purchased lists do not constitute valid permission. The consent mechanism must make clear what type of email the recipient will receive and at what frequency.
+
+1.2 Confirmed Opt-In (Double Opt-In)
+M3AAWG strongly recommends confirmed opt-in (also called double opt-in or COI) for all mailing lists. Upon sign-up, the sender sends a confirmation email to the address provided. The recipient must click a link to confirm. Only after confirmation should the address be added to the active mailing list.
+
+Benefits of confirmed opt-in:
+- Validates the email address is deliverable
+- Confirms the address owner (not a third party) consented
+- Provides an auditable consent record
+- Significantly reduces spam complaints and bounces
+
+1.3 Consent Records
+Senders must maintain records of:
+- The date and time consent was obtained
+- The IP address and user agent of the subscriber at sign-up
+- The specific opt-in form or mechanism used
+- The exact language of the consent agreement presented
+
+These records must be retained for a minimum of 3 years or as required by applicable law.
+
+1.4 Prohibition on Purchased and Scraped Lists
+Sending to purchased, rented, or scraped email lists is a violation of M3AAWG best practices. Such lists contain addresses of individuals who have not consented to receive email from the sender, dramatically increasing spam complaints and damaging sender reputation.
+
+---
+
+SECTION 2: LIST MANAGEMENT AND HYGIENE
+
+2.1 Bounce Handling
+Senders must implement automated bounce handling:
+- Hard bounces (permanent failures: 5xx codes, invalid address) must be removed from the mailing list immediately and never mailed again.
+- Soft bounces (temporary failures: 4xx codes, mailbox full) should be retried with exponential backoff. After 5 consecutive soft bounces over a 30-day period, the address should be treated as a hard bounce.
+
+2.2 Complaint Handling and Feedback Loops
+Senders must register for and process feedback loop (FBL) reports from all major mailbox providers. Upon receiving a complaint:
+- The address generating the complaint must be unsubscribed immediately.
+- Complaint rates must be monitored continuously. A complaint rate above 0.08% is a warning threshold; above 0.1% is critical and requires immediate remediation.
+
+2.3 Inactive Subscriber Management
+Email addresses that have not engaged (opened, clicked) with email in 12 months should be placed in a re-engagement campaign. If no engagement occurs after the re-engagement campaign, the address should be removed from the active list.
+
+2.4 List Age Limits
+Lists that have not been mailed in more than 6 months should be treated with caution. A significant portion may have become invalid or been reassigned. M3AAWG recommends a re-permission campaign before resuming regular mailings to aged lists.
+
+---
+
+SECTION 3: UNSUBSCRIBE REQUIREMENTS
+
+3.1 Mandatory Unsubscribe Mechanism
+Every commercial email must include a clear, conspicuous, and functional unsubscribe mechanism. This is required by law in most jurisdictions (CAN-SPAM, CASL, GDPR) and by M3AAWG best practices.
+
+3.2 One-Click Unsubscribe
+M3AAWG supports and recommends implementation of RFC 8058 (List-Unsubscribe-Post) to enable one-click unsubscribe. This allows mailbox providers to surface an unsubscribe button directly in the inbox UI. Implementation requires:
+- List-Unsubscribe header with HTTPS URL and mailto
+- List-Unsubscribe-Post: List-Unsubscribe=One-Click header
+- Processing POST requests to the unsubscribe URL within 48 hours
+
+3.3 Unsubscribe Processing Time
+Unsubscribe requests must be honored within 10 business days (CAN-SPAM requirement). M3AAWG recommends honoring unsubscribe requests within 48 hours. Sending email to an address after an unsubscribe request has been processed is a serious violation.
+
+3.4 Global Unsubscribe
+Senders with multiple lists must offer recipients the option to unsubscribe from all lists in a single action, not just the specific list that generated the unsubscribe request.
+
+---
+
+SECTION 4: CONTENT STANDARDS
+
+4.1 Accurate Identification
+Every email must:
+- Identify the sending organization clearly and accurately in the From name and address
+- Include a valid physical postal address of the sender
+- Not use deceptive subject lines that misrepresent the content of the email
+
+4.2 From Address Consistency
+The From address must remain consistent and recognizable to recipients. Frequent changes to the From address damage sender reputation and reduce recipient trust.
+
+4.3 HTML and Plain Text
+Senders should include both HTML and plain text (multipart/alternative) versions of their emails. HTML-only emails with no text alternative are a spam signal.
+
+4.4 Prohibited Content
+Senders must not send:
+- Malware, viruses, or malicious attachments
+- Content that deceives the recipient about the nature of the email
+- Content that violates the laws of the sender's or recipient's jurisdiction
+
+---
+
+SECTION 5: SENDING INFRASTRUCTURE
+
+5.1 Dedicated IP Addresses
+High-volume senders should use dedicated IP addresses rather than shared IPs, to ensure their sending reputation is not affected by other senders on the same IP.
+
+5.2 IP Warming
+New IP addresses must be warmed gradually before sending at full volume. Start with small volumes to established subscribers (low bounce/complaint rates), increasing volume over 4-8 weeks. Sending full volume from a cold IP will result in deliverability problems.
+
+5.3 Reverse DNS (PTR Records)
+All sending IPs must have valid forward-confirmed reverse DNS (FCrDNS). The PTR record for the sending IP must resolve to a hostname that in turn resolves back to the same IP. Generic PTR records (e.g., mail.123.45.67.89.in-addr.arpa) are a significant spam signal.
+
+5.4 Sending Domain Alignment
+The domain in the From address must align (match or be a subdomain of) the domain in the DKIM signature and the SPF-authenticated domain. This alignment is required for DMARC compliance.
+
+5.5 Bounce Address (Return-Path)
+The Return-Path (envelope From) must be a valid, monitored address at a domain controlled by the sender. This is the address that receives bounce notifications and must be configured to process DSN messages.
+
+---
+
+SECTION 6: VOLUME AND FREQUENCY
+
+6.1 Reasonable Sending Frequency
+Senders must not exceed the frequency of communication that recipients explicitly or implicitly agreed to at time of subscription. Sending more frequently than agreed upon increases complaint rates.
+
+6.2 Rate Limiting and Throttling
+Senders must respect mailbox provider rate limits and throttle sending accordingly. Ignoring 4xx temporary deferrals and continuing to hammer a mail server is abusive behavior and will result in blocking.
+
+6.3 Sudden Volume Spikes
+Avoid sudden large increases in sending volume. Volume spikes from established IPs or domains trigger spam filter scrutiny. Increases of more than 30% over a 24-hour period should be treated with caution.

@@ -1,0 +1,172 @@
+M3AAWG Messaging Best Common Practices (Full Summary)
+Messaging, Malware and Mobile Anti-Abuse Working Group
+
+OVERVIEW
+
+This document summarizes M3AAWG's foundational best common practices for messaging platforms and email operators. It addresses the full lifecycle of responsible messaging: infrastructure, delivery, abuse prevention, incident response, and industry cooperation. It applies to any organization that operates email, SMS, or messaging infrastructure — including ISPs, ESPs, cloud providers, and enterprise IT organizations.
+
+---
+
+SECTION 1: INFRASTRUCTURE SECURITY
+
+1.1 Mail Transfer Agent Hardening
+Mail Transfer Agents (MTAs) must be configured to:
+- Require TLS for outbound connections where supported (STARTTLS)
+- Enforce MTA-STS (RFC 8461) for domains that publish it, ensuring encrypted delivery
+- Implement DANE (DNSSEC-based) for TLS certificate validation where operationally feasible
+- Disable legacy protocols: SSLv2, SSLv3, TLS 1.0, TLS 1.1
+- Enable SMTP Auth (SASL) only on submission ports (587, 465), not on port 25
+
+1.2 Open Relay Prevention
+An open relay is an SMTP server that accepts and forwards mail from arbitrary senders to arbitrary recipients without authentication. Open relays are massively abused by spammers. All MTA configurations must restrict relay access to authenticated users or authorized IP ranges.
+
+1.3 Port 25 Blocking for Residential and Business Networks
+ISPs must block outbound port 25 (SMTP) for residential and dynamic IP ranges. This prevents compromised devices (malware-infected home computers) from being used directly as spam relays. Legitimate mail submission must use port 587 (STARTTLS) or 465 (SMTPS).
+
+1.4 Ingress Filtering
+Networks must implement BCP 38 (RFC 2827) ingress filtering to prevent IP address spoofing. Packets with source addresses that do not belong to the network should be dropped at the network perimeter.
+
+1.5 DNSSEC
+Domain owners should enable DNSSEC signing for their DNS zones to prevent DNS cache poisoning attacks against MX records, SPF records, DKIM keys, and DMARC records.
+
+---
+
+SECTION 2: DELIVERY AND QUEUING
+
+2.1 Retry and Backoff
+MTAs must implement RFC-compliant retry behavior:
+- Respect 4xx temporary deferrals — do not immediately retry
+- Use exponential backoff between retry attempts
+- Default retry period: 5 days; alert sender after 4 hours of continued deferral
+- Do not retry after 5xx permanent failures — bounce immediately
+
+2.2 Delivery Rate Control
+Sending at rates that overwhelm receiving servers is abusive. Senders must:
+- Monitor 4xx deferral rates as a signal of rate limiting
+- Adjust sending rate based on receiving server responses
+- Spread large volume sends over time rather than batching
+
+2.3 Bounce Processing
+Bounces (non-delivery reports, DSNs) must be processed:
+- Parse and categorize bounce codes (permanent vs. temporary)
+- Hard bounce addresses must be suppressed immediately
+- Bounce processing must be automated; manual review cannot scale
+- Backscatter (sending bounce notifications for forged mail) must be prevented by validating Return-Path addresses
+
+2.4 MX Record Fallback
+When the primary MX fails, senders should attempt delivery to lower-priority MX records per RFC 5321. MX records must be validated against DNSSEC where available.
+
+---
+
+SECTION 3: ABUSE PREVENTION AND DETECTION
+
+3.1 Real-Time Blocklists (RBLs / DNSBLs)
+Mailbox providers should query well-maintained real-time blocklists to screen inbound email:
+- Spamhaus (ZEN, DBL)
+- SURBL, URIBL (URL blocklists)
+- Barracuda Reputation Block List
+- abuse.ch feeds
+
+RBL-listed messages should be treated as suspect but not automatically rejected without additional context. Combine RBL signals with other scoring factors.
+
+3.2 Content Filtering
+Layered content filtering approach:
+- Signature-based detection (SpamAssassin rules, ClamAV for malware)
+- Heuristic scoring based on header, content, and URL analysis
+- Reputation scoring based on sender IP, domain, and authentication status
+- Machine learning classification trained on feedback data
+
+3.3 AI-Specific Threat Signals
+Traditional content filters are insufficient against AI-generated content. Supplement with:
+- Sending pattern analysis (volume, timing, recipient spread)
+- Authentication pass rate and history
+- Domain and IP age and reputation
+- URL reputation and landing page analysis
+- Feedback loop complaint rates
+
+3.4 Spam Threshold and Action Policy
+Define and enforce a spam scoring threshold policy:
+- Messages above threshold: quarantine to spam folder (preferred over rejection to avoid NDR backscatter)
+- Messages above high threshold: reject with 5xx
+- Messages triggering blocklist hits or malware detection: reject with 5xx
+- All enforcement actions must be logged for analysis and appeals
+
+---
+
+SECTION 4: REGULATORY COMPLIANCE
+
+4.1 CAN-SPAM Act (United States)
+Key requirements:
+- Accurate From, To, and Reply-To headers
+- Honest subject lines (no deceptive subject lines)
+- Identification as an advertisement where required
+- Valid physical postal address of the sender
+- Functional opt-out mechanism in every commercial email
+- Honor opt-out requests within 10 business days
+- Monitor third parties sending on your behalf
+
+Penalties: Up to $51,744 per email in violation.
+
+4.2 CASL (Canada's Anti-Spam Legislation)
+Stricter than CAN-SPAM:
+- Requires express or implied consent (stricter consent standards)
+- Must identify the sender clearly
+- Must provide an unsubscribe mechanism that works within 10 business days
+- Applies to all commercial electronic messages sent to or from Canada
+
+4.3 GDPR (European Union)
+Implications for email marketing:
+- Lawful basis for processing email addresses is typically consent
+- Consent must be freely given, specific, informed, and unambiguous
+- Data subjects have the right to erasure (right to be forgotten)
+- Breach notification requirements: notify supervisory authority within 72 hours of a breach
+- Privacy by design and default principles apply to mailing list systems
+
+4.4 TCPA (Telephone Consumer Protection Act — US SMS)
+For SMS messaging:
+- Requires prior express written consent for marketing texts
+- Opt-out must be honored immediately
+- Do-Not-Call registry applies to text messages
+- Class action lawsuits are common for TCPA violations ($500-$1,500 per message)
+
+---
+
+SECTION 5: INDUSTRY COOPERATION AND TRUST
+
+5.1 M3AAWG Member Responsibilities
+M3AAWG members commit to:
+- Operating their networks and services responsibly
+- Participating in abuse information sharing
+- Maintaining functional abuse contacts
+- Responding to abuse reports from other members
+- Supporting industry initiatives to improve email and messaging security
+
+5.2 Abuse Information Sharing
+M3AAWG facilitates information sharing through:
+- Threat intelligence sharing among members
+- Coordinated disclosure of large-scale abuse campaigns
+- Shared blocklists and reputation data
+
+5.3 Coordinated Abuse Response
+For large-scale or complex abuse campaigns, coordination across the industry is required:
+- Contact receiving mailbox providers through their postmaster or abuse teams
+- Engage with APWG for phishing campaigns
+- Engage with national CERTs for state-sponsored or critical infrastructure attacks
+- Use M3AAWG member communication channels for sensitive coordinated response
+
+5.4 Postmaster Pages
+All email-sending organizations should maintain a postmaster page (postmaster.example.com) providing:
+- Feedback loop registration information
+- IP and domain blocklist removal procedures
+- Contact information for deliverability issues
+- SPF, DKIM, DMARC configuration guidance for users of the platform
+
+5.5 Email Header Analysis for Abuse Investigation
+Understanding email headers is fundamental to abuse investigation:
+- Received headers: trace the path of the message from sender to recipient (read bottom to top)
+- Authentication-Results: shows SPF, DKIM, DMARC outcomes at the receiving server
+- DKIM-Signature: the cryptographic signature and signing domain
+- X-Originating-IP: may indicate the original client IP
+- Message-ID: unique identifier assigned by the sending MTA
+
+Headers can be manipulated by attackers; only trust headers added by servers you control or verified upstream MTAs.

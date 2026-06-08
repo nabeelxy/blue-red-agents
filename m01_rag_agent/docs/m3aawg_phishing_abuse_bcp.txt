@@ -1,0 +1,159 @@
+M3AAWG Anti-Phishing and Abuse Handling Best Common Practices
+Messaging, Malware and Mobile Anti-Abuse Working Group
+
+OVERVIEW
+
+Phishing remains the most prevalent and damaging form of email and messaging abuse. It serves as the entry point for credential theft, account takeover, ransomware deployment, and financial fraud. This document covers best practices for detecting, reporting, and responding to phishing, and for operating platforms that may be abused by phishing actors.
+
+The AI/LLM revolution has fundamentally changed the phishing landscape. Historically, phishing emails were detectable by poor grammar, generic salutations, and obvious lures. AI-generated phishing content is now indistinguishable from legitimate communication in grammar and style, is hyper-personalized using OSINT about the target, and can be generated at massive scale in any language. Defenders must adapt their detection strategies accordingly.
+
+---
+
+SECTION 1: THE EVOLVING PHISHING THREAT
+
+1.1 AI-Generated Phishing at Scale
+Large language models (LLMs) can generate highly convincing phishing email content with:
+- Perfect grammar and natural language in any language
+- Personalization based on the target's name, employer, role, and recent activity
+- Brand impersonation that perfectly mimics the writing style of the spoofed organization
+- Dynamic content that avoids exact string matching used by traditional spam filters
+
+One attacker with a single LLM API subscription can now produce the volume and quality of phishing content that previously required a team of human writers.
+
+1.2 Spear Phishing and BEC
+Business Email Compromise (BEC) is a targeted phishing attack against specific organizations. Attackers:
+- Research the target organization using OSINT (LinkedIn, company website, social media)
+- Identify the attack vector (CFO, accounts payable, HR department)
+- Craft personalized lures requesting wire transfers, W-2 data, or gift card purchases
+- Spoof or compromise executive email addresses to add legitimacy
+
+BEC losses run into billions of dollars annually. DMARC p=reject at the sending domain significantly reduces impersonation via spoofed email, but not compromise of legitimate accounts.
+
+1.3 Smishing (SMS Phishing)
+Phishing via SMS exploits user trust in text messages and the limited display of URLs on mobile devices. Common campaigns include:
+- Fake package delivery notifications (USPS, FedEx, DHL)
+- Fake bank fraud alerts
+- Fake government payment notifications
+- Fake toll/traffic violation notices
+
+M3AAWG has published specific guidance on mobile messaging abuse in its mobile messaging resources.
+
+1.4 Phishing Infrastructure Characteristics
+AI agents are now being used to automate phishing infrastructure deployment:
+- Automated domain registration using generated identities
+- Rapid deployment of phishing kit clones to freshly registered domains
+- Rotation of domains and IPs to evade blocklists
+- Use of legitimate cloud infrastructure (AWS, Azure, GCP, Cloudflare) to host phishing pages
+- SSL certificates obtained automatically via Let's Encrypt (https does not mean safe)
+
+---
+
+SECTION 2: PHISHING DETECTION
+
+2.1 URL and Domain Analysis
+Key signals in phishing URLs:
+- Recently registered domain (within days or weeks of the campaign)
+- Domain name uses typosquatting, combosquatting, or homoglyph substitution
+  Example: paypa1.com, paypał.com, paypal-secure.com, mybank-login.com
+- Domain registered with a privacy protection service
+- Domain hosted on bullet-proof hosting or known abuse-friendly hosting providers
+- URL contains a legitimate brand name as a subdomain of a malicious domain
+  Example: paypal.com.malicious-site.xyz/login
+- Redirect chains that hide the final destination URL
+- URL shorteners used to obscure the target
+
+2.2 Content Analysis
+Content-based phishing signals (noting that AI has reduced the reliability of many traditional signals):
+- Urgent language demanding immediate action
+- Requests for credentials, payment information, or sensitive data
+- Embedded forms collecting sensitive information (no legitimate service sends login forms via email)
+- Mismatched visible link text and actual href destination
+- HTML that attempts to hide content from scanners (display:none, zero-size fonts, white text)
+- Tracking pixels used to confirm delivery and open rates
+
+2.3 Sender Analysis
+- From domain does not match the organization being impersonated (Check: is DMARC p=reject? If so, the From must be authentic or the message should be rejected.)
+- Sender IP has no established reputation or is newly deployed
+- Inconsistency between From, Reply-To, and Return-Path addresses
+- Routing through known bulletproof hosting providers or unusual geographies for the claimed sender
+
+2.4 Visual Similarity Detection
+Modern phishing detection increasingly relies on visual analysis:
+- Screenshot the landing page and compare to the impersonated brand's actual page
+- Use perceptual hashing to detect copies of known phishing kit templates
+- Vision models can identify brand logos on phishing pages and flag impersonation
+
+---
+
+SECTION 3: ABUSE REPORTING ECOSYSTEM
+
+3.1 Industry Reporting Channels
+When phishing is detected, rapid reporting to the appropriate parties accelerates takedown:
+- APWG (Anti-Phishing Working Group): reportphishing@apwg.org — maintains a global blocklist
+- PhishTank: crowdsourced phishing URL database
+- Google Safe Browsing: abuse report API for URL submission
+- Microsoft SmartScreen: abuse reporting for Outlook users
+- Domain registrar abuse contacts: abuse contacts published in WHOIS
+- Hosting provider abuse contacts: required under many jurisdictions
+- National CERTs: for attacks targeting national infrastructure or government entities
+
+3.2 Abuse Contact Discovery
+- WHOIS lookup for domain registrar abuse contact
+- The abuse contact for the hosting IP: look up the ASN and query the RIR (ARIN, RIPE, APNIC)
+- abuse.ch provides automated feeds of known malicious infrastructure
+
+3.3 Abuse Report Requirements
+An effective abuse report should include:
+- The phishing URL
+- A screenshot of the phishing page
+- Full email headers (if applicable)
+- The brand being impersonated
+- Date and time of detection
+- Contact information for follow-up
+
+3.4 Registrar and Hosting Provider Obligations
+M3AAWG urges registrars and hosting providers to:
+- Publish and monitor a functional abuse contact (required by ICANN for registrars)
+- Acknowledge abuse reports within 24 hours
+- Take action on credible phishing reports within 24-48 hours
+- Participate in industry blocklist sharing programs
+- Implement proactive measures to prevent abuse in their registration and hosting pipelines
+
+---
+
+SECTION 4: OPERATING A PLATFORM RESPONSIBLY
+
+4.1 Abuse Team and Processes
+Platforms that provide email or messaging services must maintain:
+- A dedicated abuse response team with appropriate authority to take action
+- Documented abuse handling procedures with defined response times
+- A publicly accessible abuse reporting mechanism (abuse@ email address minimum)
+- Participation in industry trust and safety working groups (M3AAWG, APWG)
+
+4.2 Proactive Abuse Prevention at Registration
+To reduce the risk of phishing campaigns originating from your platform:
+- Verify identity at account creation (email verification, phone verification)
+- Implement risk scoring for new account registrations
+- Apply enhanced scrutiny to bulk-registration patterns (many accounts created from same IP, similar usernames, similar content)
+- AI agents are now being used to automate account creation; CAPTCHA alone is insufficient
+
+4.3 Content Scanning
+Outbound content scanning for:
+- Known phishing URLs (against Google Safe Browsing, SURBL, URIBL, PhishTank)
+- Known malware attachment hashes (against VirusTotal or equivalent)
+- Suspicious URL patterns (newly registered domains, typosquatting)
+
+4.4 Feedback Loops and Complaint Handling
+- Register for feedback loops with major mailbox providers
+- Process spam complaints within 48 hours
+- Use complaint data to identify compromised accounts and policy violations
+- Publish and enforce clear acceptable use policies (AUPs) that prohibit phishing
+
+4.5 Coordination with Law Enforcement
+For large-scale or highly damaging phishing campaigns, coordinate with:
+- National CERTs
+- FBI IC3 (Internet Crime Complaint Center) for US-based attacks
+- Europol EC3 for EU-based attacks
+- Local cybercrime units
+
+Platform operators should designate a Law Enforcement Point of Contact (LEPOC) and establish data preservation procedures for potential law enforcement requests.

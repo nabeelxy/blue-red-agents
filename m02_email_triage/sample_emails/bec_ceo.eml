@@ -1,0 +1,41 @@
+Return-Path: <j.smith@acme-corp-mail.com>
+Received: from smtp.acme-corp-mail.com (45.33.32.156)
+	by mx.demo-mailbox.com with ESMTP id bec001
+	for <finance@acmecorp.com>; Mon, 14 Apr 2026 14:33:10 +0000
+Authentication-Results: mx.demo-mailbox.com;
+	spf=pass (acme-corp-mail.com: 45.33.32.156 is permitted sender) smtp.mailfrom=j.smith@acme-corp-mail.com;
+	dkim=none;
+	dmarc=none (no record for acme-corp-mail.com)
+From: "James Smith, CEO" <j.smith@acme-corp-mail.com>
+Reply-To: james.smith.ceo.personal@gmail.com
+To: finance@acmecorp.com
+Subject: Confidential - Urgent Wire Transfer Required Today
+Date: Mon, 14 Apr 2026 14:33:05 +0000
+Message-ID: <20260414143305.bec@acme-corp-mail.com>
+MIME-Version: 1.0
+Content-Type: text/plain; charset=UTF-8
+
+Hi Sarah,
+
+I need you to process an urgent wire transfer today. I'm currently in a board
+meeting in Singapore and cannot be reached by phone. This is time-sensitive and
+must be completed by end of business today.
+
+Please arrange a transfer of $127,500 to the following account:
+
+  Beneficiary: Meridian Strategic Partners LLC
+  Bank: First National Bank
+  Account: 4829301847
+  Routing: 021000089
+  Reference: Q2 Advisory Services
+
+This is for a confidential acquisition that cannot be discussed internally yet.
+Please do not mention this to anyone in the office.
+
+Reply to this email to confirm when the transfer is complete. If you have any
+issues, email me back — do not call as I am in back-to-back meetings all day.
+
+Thanks for your discretion on this.
+
+James Smith
+CEO, Acme Corporation
